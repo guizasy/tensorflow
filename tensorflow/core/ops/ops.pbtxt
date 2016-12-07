@@ -30780,3 +30780,341 @@ op {
   summary: "Creates a dataset that zips together `input_datasets`."
   is_stateful: true
 }
+op {
+  name: "OpticalFlowToHSV"
+  input_arg {
+    name: "flows"
+    description: "4-D with shape `[batch, height, width, 2]`."
+    type_attr: "T"
+  }
+  output_arg {
+    name: "images"
+    description: "4-D with shape `[batch, new_height, new_width, 3]`."
+    type_attr: "T"
+  }
+  attr {
+    name: "T"
+    type: "type"
+    allowed_values {
+      list {
+        type: DT_FLOAT
+        type: DT_DOUBLE
+      }
+    }
+  }
+  attr {
+    name: "saturate_magnitude"
+    type: "float"
+    default_value {
+      f: 0.0
+    }
+    description: "If the saturation is set, it will use the saturation magnitude to normalize the flow. Otherwise it will find the maximum magnitude for each of the flow in the batch."
+  }
+  summary: "Convert `flows` to `images` where images are HSV encoded."
+  description: "By Xinlei Chen."
+}
+op {
+  name: "OpticalFlowToRGB"
+  input_arg {
+    name: "flows"
+    description: "4-D with shape `[batch, height, width, 2]`."
+    type_attr: "T"
+  }
+  output_arg {
+    name: "images"
+    description: "4-D with shape `[batch, new_height, new_width, 3]`."
+    type_attr: "T"
+  }
+  attr {
+    name: "T"
+    type: "type"
+    allowed_values {
+      list {
+        type: DT_FLOAT
+        type: DT_DOUBLE
+      }
+    }
+  }
+  attr {
+    name: "saturate_magnitude"
+    type: "float"
+    default_value {
+      f: 0.0
+    }
+    description: "If the saturation is set, it will use the saturation magnitude to normalize the flow. Otherwise it will find the maximum magnitude for each of the flow in the batch."
+  }
+  summary: "Convert `flows` to `images` where images are RGB encoded."
+  description: "By Xinlei Chen."
+}
+op {
+  name: "Resample"
+  input_arg {
+    name: "images"
+    description: "4-D with shape `[batch, height, width, channels]`."
+    type_attr: "T"
+  }
+  input_arg {
+    name: "size"
+    description: "= A 1-D int32 Tensor of 2 elements: `new_height, new_width`.  The\nnew size for the images."
+    type: DT_INT32
+  }
+  output_arg {
+    name: "resized_images"
+    description: "4-D with shape\n`[batch, new_height, new_width, channels]`."
+    type_attr: "T"
+  }
+  attr {
+    name: "T"
+    type: "type"
+    allowed_values {
+      list {
+        type: DT_FLOAT
+        type: DT_DOUBLE
+      }
+    }
+  }
+  attr {
+    name: "bicubic"
+    type: "bool"
+    default_value {
+      b: false
+    }
+    description: "If true, apply bicubic interpolation, if false, apply bilinear interpolation."
+  }
+  attr {
+    name: "antialias"
+    type: "bool"
+    default_value {
+      b: true
+    }
+    description: "If true, do antialiasing when the size is reduced."
+  }
+  summary: "Resize `images` to `size` using resampling algorithm in OpenCV."
+  description: "By Xinlei Chen."
+}
+op {
+  name: "ResampleGrad"
+  input_arg {
+    name: "grads"
+    description: "4-D with shape `[batch, height, width, channels]`."
+    type_attr: "T"
+  }
+  input_arg {
+    name: "original_image"
+    description: "4-D with shape `[batch, orig_height, orig_width, channels]`,\nThe image tensor that was resized."
+    type_attr: "T"
+  }
+  output_arg {
+    name: "output"
+    description: "4-D with shape `[batch, orig_height, orig_width, channels]`.\nGradients with respect to the input image. Input image must have been\nfloat or double."
+    type_attr: "T"
+  }
+  attr {
+    name: "T"
+    type: "type"
+    allowed_values {
+      list {
+        type: DT_FLOAT
+        type: DT_DOUBLE
+      }
+    }
+  }
+  attr {
+    name: "bicubic"
+    type: "bool"
+    default_value {
+      b: false
+    }
+    description: "If true, apply bicubic interpolation, if false, apply bilinear interpolation."
+  }
+  attr {
+    name: "antialias"
+    type: "bool"
+    default_value {
+      b: true
+    }
+    description: "If true, do antialiasing when the size is reduced."
+  }
+  summary: "Computes the gradient of OpenCV interpolation."
+  description: "By Xinlei Chen."
+}
+op {
+  name: "RoiPooling"
+  input_arg {
+    name: "bottom_data"
+    type_attr: "T"
+  }
+  input_arg {
+    name: "bottom_rois"
+    type_attr: "T"
+  }
+  output_arg {
+    name: "top_data"
+    type_attr: "T"
+  }
+  output_arg {
+    name: "argmax"
+    type: DT_INT32
+  }
+  attr {
+    name: "T"
+    type: "type"
+    allowed_values {
+      list {
+        type: DT_FLOAT
+        type: DT_DOUBLE
+      }
+    }
+  }
+  attr {
+    name: "pooled_height"
+    type: "int"
+  }
+  attr {
+    name: "pooled_width"
+    type: "int"
+  }
+  attr {
+    name: "spatial_scale"
+    type: "float"
+  }
+  summary: "ROI Pooling layer from Fast RCNN."
+  description: "By Xinlei Chen."
+}
+op {
+  name: "RoiPoolingGrad"
+  input_arg {
+    name: "bottom_data"
+    type_attr: "T"
+  }
+  input_arg {
+    name: "bottom_rois"
+    type_attr: "T"
+  }
+  input_arg {
+    name: "argmax"
+    type: DT_INT32
+  }
+  input_arg {
+    name: "grad"
+    type_attr: "T"
+  }
+  output_arg {
+    name: "output"
+    type_attr: "T"
+  }
+  attr {
+    name: "T"
+    type: "type"
+    allowed_values {
+      list {
+        type: DT_FLOAT
+        type: DT_DOUBLE
+      }
+    }
+  }
+  attr {
+    name: "pooled_height"
+    type: "int"
+  }
+  attr {
+    name: "pooled_width"
+    type: "int"
+  }
+  attr {
+    name: "spatial_scale"
+    type: "float"
+  }
+  summary: "Gradient Computation for ROI Pooling layer from Fast RCNN."
+  description: "By Xinlei Chen."
+}
+op {
+  name: "RoiUnpooling"
+  input_arg {
+    name: "bottom_feat"
+    type_attr: "T"
+  }
+  input_arg {
+    name: "bottom_rois"
+    type_attr: "T"
+  }
+  output_arg {
+    name: "top_data"
+    type_attr: "T"
+  }
+  attr {
+    name: "T"
+    type: "type"
+    allowed_values {
+      list {
+        type: DT_FLOAT
+        type: DT_DOUBLE
+      }
+    }
+  }
+  attr {
+    name: "data_height"
+    type: "int"
+  }
+  attr {
+    name: "data_width"
+    type: "int"
+  }
+  attr {
+    name: "spatial_scale"
+    type: "float"
+  }
+  attr {
+    name: "batch_size"
+    type: "int"
+  }
+  summary: "ROI Unpooling layer which operates reversely from ROI pooling layer."
+  description: "By Xinlei Chen."
+}
+op {
+  name: "RoiUnpoolingGrad"
+  input_arg {
+    name: "bottom_feat"
+    type_attr: "T"
+  }
+  input_arg {
+    name: "bottom_rois"
+    type_attr: "T"
+  }
+  input_arg {
+    name: "grad"
+    type_attr: "T"
+  }
+  output_arg {
+    name: "bottom_grad"
+    type_attr: "T"
+  }
+  attr {
+    name: "T"
+    type: "type"
+    allowed_values {
+      list {
+        type: DT_FLOAT
+        type: DT_DOUBLE
+      }
+    }
+  }
+  attr {
+    name: "data_height"
+    type: "int"
+  }
+  attr {
+    name: "data_width"
+    type: "int"
+  }
+  attr {
+    name: "spatial_scale"
+    type: "float"
+  }
+  attr {
+    name: "batch_size"
+    type: "int"
+  }
+  summary: "Gradient Computation for ROI Unpooling layer."
+  description: "By Xinlei Chen."
+}

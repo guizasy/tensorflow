@@ -30,6 +30,14 @@ See the @{$python/image} guide.
 @@resize_bicubic
 @@resize_bilinear
 @@resize_nearest_neighbor
+
+@@resample
+
+@@roi_pooling
+@@roi_unpooling
+
+## Cropping
+
 @@resize_image_with_crop_or_pad
 @@central_crop
 @@pad_to_bounding_box
@@ -47,6 +55,10 @@ See the @{$python/image} guide.
 @@grayscale_to_rgb
 @@hsv_to_rgb
 @@rgb_to_hsv
+
+@@optical_flow_to_hsv
+@@optical_flow_to_rgb
+
 @@convert_image_dtype
 @@adjust_brightness
 @@random_brightness

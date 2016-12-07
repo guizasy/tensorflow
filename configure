@@ -672,7 +672,7 @@ function get_native_cuda_compute_capabilities {
 while true; do
   fromuser=""
   native_cuda_compute_capabilities=$(get_native_cuda_compute_capabilities)
-  default_cuda_compute_capabilities=${native_cuda_compute_capabilities:-"3.5,5.2"}
+  default_cuda_compute_capabilities=${native_cuda_compute_capabilities:-"3.5,5.2,6.1"}
   if [ -z "$TF_CUDA_COMPUTE_CAPABILITIES" ]; then
 cat << EOF
 Please specify a list of comma-separated Cuda compute capabilities you want to build with.

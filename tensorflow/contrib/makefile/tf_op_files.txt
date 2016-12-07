@@ -217,6 +217,11 @@ tensorflow/core/kernels/requantize.cc
 tensorflow/core/kernels/remote_fused_graph_execute_op.cc
 tensorflow/core/kernels/remote_fused_graph_execute_utils.cc
 tensorflow/core/kernels/batch_matmul_op_real.cc
+tensorflow/core/kernels/resample_op.cc
+tensorflow/core/kernels/optical_flow_to_hsv_op.cc
+tensorflow/core/kernels/optical_flow_to_rgb_op.cc
+tensorflow/core/kernels/roi_pooling_op.cc
+tensorflow/core/kernels/roi_unpooling_op.cc
 tensorflow/core/ops/training_ops.cc
 tensorflow/core/ops/string_ops.cc
 tensorflow/core/ops/state_ops.cc
@@ -249,3 +254,4 @@ tensorflow/core/kernels/spacetobatch_functor.cc
 tensorflow/core/kernels/spacetobatch_op.cc
 tensorflow/core/kernels/batchtospace_op.cc
 tensorflow/core/kernels/warn_about_ints.cc
+tensorflow/core/ops/array_grad.cc

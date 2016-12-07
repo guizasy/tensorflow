@@ -110,3 +110,65 @@ def _CropAndResizeGrad(op, grad):
                                                    op.inputs[1], op.inputs[2])
 
   return [grad0, grad1, None, None]
+
+
+@ops.RegisterGradient("Resample")
+def _ResampleGrad(op, grad):
+  """The derivatives for OpenCV resizing.
+
+  Args:
+    op: The Resample op.
+    grad: The tensor representing the gradient w.r.t. the output.
+
+  Returns:
+    The gradients w.r.t. the input.
+  """
+  allowed_types = [dtypes.float32, dtypes.float64]
+  grad0 = None
+  if op.inputs[0].dtype in allowed_types:
+    # pylint: disable=protected-access
+    grad0 = gen_image_ops.resample_grad(
+        grad,
+        op.inputs[0],
+        bicubic=op.get_attr("bicubic"),
+        antialias=op.get_attr("antialias"))
+    # pylint: enable=protected-access
+  return [grad0, None]
+
+@ops.RegisterGradient("RoiPooling")
+def _RoiPoolingGrad(op, grad, _):
+  allowed_types = [dtypes.float32, dtypes.float64]
+  data_grad = None
+  if op.inputs[0].dtype in allowed_types:
+    data = op.inputs[0]
+    rois = op.inputs[1]
+    argmax = op.outputs[1]
+    pooled_height = op.get_attr('pooled_height')
+    pooled_width = op.get_attr('pooled_width')
+    spatial_scale = op.get_attr('spatial_scale')
+
+    data_grad = gen_image_ops.roi_pooling_grad(data, rois, argmax, grad, 
+                          pooled_height=pooled_height, 
+                          pooled_width=pooled_width, 
+                          spatial_scale=spatial_scale)
+  return [data_grad, None]
+
+@ops.RegisterGradient("RoiUnpooling")
+def _RoiUnpoolingGrad(op, grad):
+  allowed_types = [dtypes.float32, dtypes.float64]
+  data_grad = None
+  if op.inputs[0].dtype in allowed_types:
+    feat = op.inputs[0]
+    rois = op.inputs[1]
+    data_height = op.get_attr('pooled_height')
+    data_width = op.get_attr('pooled_width')
+    spatial_scale = op.get_attr('spatial_scale')
+    batch_size = op.get_attr('batch_size')
+
+    data_grad = gen_image_ops.roi_pooling_grad(
+                          feat, rois, grad, 
+                          data_height=pooled_height, 
+                          data_width=pooled_width, 
+                          spatial_scale=spatial_scale,
+                          batch_size=batch_size)
+  return [data_grad, None]

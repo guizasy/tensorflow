@@ -108,6 +108,16 @@ Status ColorspaceShapeFn(InferenceContext* c) {
   return Status::OK();
 }
 
+// Added by X
+Status OpticalFlowtoVisShapeFn(InferenceContext* c) {
+  ShapeHandle input;
+  TF_RETURN_IF_ERROR(c->WithRank(c->input(0), 4, &input));
+  c->set_output(0, c->MakeShape({c->Dim(input, 0), 
+                                c->Dim(input, 1), c->Dim(input, 2), 
+                                3}));
+  return Status::OK();
+}
+
 }  // namespace
 
 // --------------------------------------------------------------------------
@@ -1200,4 +1210,185 @@ selected_indices: A 1-D integer tensor of shape `[M]` representing the selected
   indices from the boxes tensor, where `M <= max_output_size`.
 )doc");
 
+
+// Added by X
+// --------------------------------------------------------------------------
+REGISTER_OP("OpticalFlowToHSV")
+    .Input("flows: T")
+    .Output("images: float")
+    .Attr("T: {float, double}")
+    .Attr("saturate_magnitude: float = 0.0")
+    .SetShapeFn(OpticalFlowtoVisShapeFn)
+    .Doc(R"doc(
+Convert `flows` to `images` where images are HSV encoded.
+
+Input flows can be of different types but output images are always float (between 0.0 and 1.0).
+
+flows: 4-D with shape `[batch, height, width, 2]`.
+saturate_magnitude: If the saturation is set, it will use the saturation magnitude
+  to normalize the flow. Otherwise it will find the maximum magnitude for each of
+  the flow in the batch.
+images: 4-D with shape `[batch, new_height, new_width, 3]`.
+)doc");
+
+// --------------------------------------------------------------------------
+REGISTER_OP("OpticalFlowToRGB")
+    .Input("flows: T")
+    .Output("images: float")
+    .Attr("T: {float, double}")
+    .Attr("saturate_magnitude: float = 0.0")
+    .SetShapeFn(OpticalFlowtoVisShapeFn)
+    .Doc(R"doc(
+Convert `flows` to `images` where images are RGB encoded.
+
+Input flows can be of different types but output images are always float (between 0.0 and 1.0).
+
+flows: 4-D with shape `[batch, height, width, 2]`.
+saturate_magnitude: If the saturation is set, it will use the saturation magnitude
+  to normalize the flow. Otherwise it will find the maximum magnitude for each of
+  the flow in the batch.
+images: 4-D with shape `[batch, new_height, new_width, 3]`.
+)doc");
+
+// --------------------------------------------------------------------------
+REGISTER_OP("Resample")
+    .Input("images: T")
+    .Input("size: int32")
+    .Output("resized_images: T")
+    .Attr("T: {float, double}")
+    .Attr("bicubic: bool = false")
+    .Attr("antialias: bool = true")
+    .SetShapeFn(ResizeShapeFn)
+    .Doc(R"doc(
+Resize `images` to `size` using resampling algorithm in OpenCV.
+
+images: 4-D with shape `[batch, height, width, channels]`.
+size:= A 1-D int32 Tensor of 2 elements: `new_height, new_width`.  The
+  new size for the images.
+bicubic: If true, use bicubic interpolation; If false, use bilinear interpolation.
+antialias: If true, do antialiasing when the size is reduced.
+resized_images: 4-D with shape
+  `[batch, new_height, new_width, channels]`.
+)doc");
+
+// --------------------------------------------------------------------------
+REGISTER_OP("ResampleGrad")
+    .Input("grads: T")
+    .Input("original_image: T")
+    .Output("output: T")
+    .Attr("T: {float, double}")
+    .Attr("bicubic: bool = false")
+    .Attr("antialias: bool = true")
+    .SetShapeFn([](InferenceContext* c) {
+      c->set_output(0, c->input(1));
+      return Status::OK();
+    })
+    .Doc(R"doc(
+Computes the gradient of OpenCV interpolation.
+
+grads: 4-D with shape `[batch, height, width, channels]`.
+original_image: 4-D with shape `[batch, orig_height, orig_width, channels]`,
+  The image tensor that was resized.
+bicubic: If true, use bicubic interpolation; If false, use bilinear interpolation.
+antialias: If true, do antialiasing when the size is reduced.
+output: 4-D with shape `[batch, orig_height, orig_width, channels]`.
+  Gradients with respect to the input image. Input image must have been
+  float or double.
+)doc");
+
+// --------------------------------------------------------------------------
+REGISTER_OP("RoiPooling")
+    .Input("bottom_data: T")
+    .Input("bottom_rois: T")
+    .Output("top_data: T")
+    .Output("argmax: int32")
+    .Attr("T: {float, double}")
+    .Attr("pooled_height: int")
+    .Attr("pooled_width: int")
+    .Attr("spatial_scale: float")
+    .SetShapeFn([](InferenceContext* c) {
+      int64 ph;
+      TF_RETURN_IF_ERROR(c->GetAttr("pooled_height", &ph));
+      int64 pw;
+      TF_RETURN_IF_ERROR(c->GetAttr("pooled_width", &pw));
+      ShapeHandle input_data;
+      TF_RETURN_IF_ERROR(c->WithRank(c->input(0), 4, &input_data));
+      ShapeHandle input_rois;
+      TF_RETURN_IF_ERROR(c->WithRank(c->input(1), 2, &input_rois));
+      c->set_output(0, c->MakeShape({c->Dim(input_rois, 0), ph, pw, 
+                                c->Dim(input_data, 3)}));
+      c->set_output(1, c->MakeShape({c->Dim(input_rois, 0), ph, pw, 
+                                c->Dim(input_data, 3)}));
+      return Status::OK();
+    })
+    .Doc(R"doc(
+ROI Pooling layer from Fast RCNN.
+)doc");
+
+// --------------------------------------------------------------------------
+REGISTER_OP("RoiPoolingGrad")
+    .Input("bottom_data: T")
+    .Input("bottom_rois: T")
+    .Input("argmax: int32")
+    .Input("grad: T")
+    .Output("output: T")
+    .Attr("T: {float, double}")
+    .Attr("pooled_height: int")
+    .Attr("pooled_width: int")
+    .Attr("spatial_scale: float")
+    .SetShapeFn([](InferenceContext* c) {
+      c->set_output(0, c->input(0));
+      return Status::OK();
+    })
+    .Doc(R"doc(
+Gradient Computation for ROI Pooling layer from Fast RCNN.
+)doc");
+
+// --------------------------------------------------------------------------
+REGISTER_OP("RoiUnpooling")
+    .Input("bottom_feat: T")
+    .Input("bottom_rois: T")
+    .Output("top_data: T")
+    .Attr("T: {float, double}")
+    .Attr("data_height: int")
+    .Attr("data_width: int")
+    .Attr("spatial_scale: float")
+    .Attr("batch_size: int")
+    .SetShapeFn([](InferenceContext* c) {
+      int64 dh;
+      TF_RETURN_IF_ERROR(c->GetAttr("data_height", &dh));
+      int64 dw;
+      TF_RETURN_IF_ERROR(c->GetAttr("data_width", &dw));
+      int64 bs;
+      TF_RETURN_IF_ERROR(c->GetAttr("batch_size", &bs));
+      ShapeHandle input_feat;
+      TF_RETURN_IF_ERROR(c->WithRank(c->input(0), 4, &input_feat));
+      c->set_output(0, c->MakeShape({bs, dh, dw, 
+                                c->Dim(input_feat, 3)}));
+      return Status::OK();
+    })
+    .Doc(R"doc(
+ROI Unpooling layer which operates reversely from ROI pooling layer.
+)doc");
+
+// --------------------------------------------------------------------------
+REGISTER_OP("RoiUnpoolingGrad")
+    .Input("bottom_feat: T")
+    .Input("bottom_rois: T")
+    .Input("grad: T")
+    .Output("bottom_grad: T")
+    .Attr("T: {float, double}")
+    .Attr("data_height: int")
+    .Attr("data_width: int")
+    .Attr("spatial_scale: float")
+    .Attr("batch_size: int")
+    .SetShapeFn([](InferenceContext* c) {
+      c->set_output(0, c->input(0));
+      return Status::OK();
+    })
+    .Doc(R"doc(
+Gradient Computation for ROI Unpooling layer.
+)doc");
+
 }  // namespace tensorflow
+

@@ -1676,6 +1676,11 @@ cc_library(
         ":resize_bilinear_op",
         ":resize_nearest_neighbor_op",
         ":sample_distorted_bounding_box_op",
+        ":resample_op",
+        ":optical_flow_to_hsv_op",
+        ":optical_flow_to_rgb_op",
+        ":roi_pooling_op",
+        ":roi_unpooling_op",
     ],
 )
 
@@ -1824,6 +1829,36 @@ tf_kernel_library(
         "//tensorflow/core:lib_internal",
         "//tensorflow/core:protos_all_cc",
     ],
+)
+
+tf_kernel_library(
+    name = "resample_op",
+    prefix = "resample_op",
+    deps = IMAGE_DEPS,
+)
+
+tf_kernel_library(
+    name = "optical_flow_to_hsv_op",
+    prefix = "optical_flow_to_hsv_op",
+    deps = IMAGE_DEPS,
+)
+
+tf_kernel_library(
+    name = "optical_flow_to_rgb_op",
+    prefix = "optical_flow_to_rgb_op",
+    deps = IMAGE_DEPS,
+)
+
+tf_kernel_library(
+    name = "roi_pooling_op",
+    prefix = "roi_pooling_op",
+    deps = IMAGE_DEPS,
+)
+
+tf_kernel_library(
+    name = "roi_unpooling_op",
+    prefix = "roi_unpooling_op",
+    deps = IMAGE_DEPS,
 )
 
 tf_cc_tests(
@@ -4342,6 +4377,11 @@ filegroup(
         "warn_about_ints.cc",
         "where_op.cc",
         "xent_op.cc",
+        "resample_op.cc",
+        "optical_flow_to_hsv_op.cc",
+        "optical_flow_to_rgb_op.cc",
+        "roi_pooling_op.cc",
+        "roi_unpooling_op.cc",
         ":android_extended_ops_headers",
     ],
 )
