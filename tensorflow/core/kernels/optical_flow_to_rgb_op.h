@@ -13,6 +13,9 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
+#ifndef TENSORFLOW_KERNELS_OPTICAL_FLOW_TO_RGB_OP_H_
+#define TENSORFLOW_KERNELS_OPTICAL_FLOW_TO_RGB_OP_H_
+
 // See docs in ../ops/image_ops.cc
 #define EIGEN_USE_THREADS
 #include <math.h>
@@ -128,7 +131,7 @@ class OpticalFlowToRGBOp : public OpKernel {
           for (int x = 0; x < width; ++x) {
             T fx = input_data(b, y, x, 0);
             T fy = input_data(b, y, x, 1);
-            if (isnan(fx) || isnan(fy)) {
+            if (Eigen::numext::isnan(fx) || Eigen::numext::isnan(fy)) {
               continue;
             }
             T rad = fx * fx + fy * fy;
@@ -144,7 +147,7 @@ class OpticalFlowToRGBOp : public OpKernel {
         for (int x = 0; x < width; ++x) {
           const float fx = input_data(b, y, x, 0);
           const float fy = input_data(b, y, x, 1);
-          if (isnan(fx) || isnan(fy)) {
+          if (Eigen::numext::isnan(fx) || Eigen::numext::isnan(fy)) {
             output_data(b, y, x, 0) = 0.0;
             output_data(b, y, x, 1) = 0.0;
             output_data(b, y, x, 2) = 0.0;
@@ -166,3 +169,5 @@ class OpticalFlowToRGBOp : public OpKernel {
 };
 
 }  // namespace tensorflow
+
+#endif
